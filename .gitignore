@@ -1,0 +1,8 @@
+clips/core/*.o
+clips/core/clips
+clips/core/libclips.a
+
+src/*.o
+src/*.d
+
+clipssweeper

@@ -1,0 +1,6 @@
+# Clipssweeper
+
+# Compile
+```
+$ make
+```
