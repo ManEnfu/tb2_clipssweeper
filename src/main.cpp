@@ -8,7 +8,7 @@ int main() {
     Watch(env, STATISTICS);
     Watch(env, FACTS);
     Watch(env, ACTIVATIONS);
-    if (Load(env,"clp/field.clp") != LoadError::LE_NO_ERROR)
+    if (Load(env,"clp/minesweeper.clp") != LoadError::LE_NO_ERROR)
         exit(1);
     Reset(env);
     Facts(env, "stdout", NULL, -1, -1, -1);
