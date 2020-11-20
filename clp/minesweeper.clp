@@ -50,24 +50,32 @@
     (size 6)
     (tile-open (row 0) (col 0) (mine-count 0))
     (tile-open (row 0) (col 1) (mine-count 0))
-    (tile-open (row 0) (col 2) (mine-count 0))
-    (tile-open (row 0) (col 3) (mine-count 0))
-    (tile-open (row 0) (col 4) (mine-count 0))
-    (tile-open (row 0) (col 5) (mine-count 0))
+    (tile-open (row 0) (col 2) (mine-count 1))
     
     (tile-open (row 1) (col 0) (mine-count 0))
     (tile-open (row 1) (col 1) (mine-count 0))
     (tile-open (row 1) (col 2) (mine-count 1))
     (tile-open (row 1) (col 3) (mine-count 1))
-    (tile-open (row 1) (col 4) (mine-count 2))
-    (tile-open (row 1) (col 5) (mine-count 1))
+    (tile-open (row 1) (col 4) (mine-count 3))
     
     (tile-open (row 2) (col 0) (mine-count 0))
-    (tile-open (row 2) (col 1) (mine-count 1))
-    (tile-open (row 2) (col 2) (mine-count 3))
+    (tile-open (row 2) (col 1) (mine-count 0))
+    (tile-open (row 2) (col 2) (mine-count 0))
+    (tile-open (row 2) (col 3) (mine-count 0))
+    (tile-open (row 2) (col 4) (mine-count 2))
     
-    (tile-open (row 3) (col 0) (mine-count 1))
-    (tile-open (row 3) (col 1) (mine-count 2))
+    (tile-open (row 3) (col 0) (mine-count 0))
+    (tile-open (row 3) (col 1) (mine-count 0))
+    (tile-open (row 3) (col 2) (mine-count 1))
+    (tile-open (row 3) (col 3) (mine-count 2))
+    (tile-open (row 3) (col 4) (mine-count 3))
+
+    (tile-open (row 4) (col 0) (mine-count 0))
+    (tile-open (row 4) (col 1) (mine-count 1))
+    (tile-open (row 4) (col 2) (mine-count 2))
+
+    (tile-open (row 5) (col 0) (mine-count 0))
+    (tile-open (row 5) (col 1) (mine-count 1))
 )
 
 ;;; PHASE 1 init-field
@@ -204,6 +212,13 @@
         )
         (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type flag)))
     )
+    (printout t "all-closed-is-flag:" crlf
+        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "-> Flag all closed adjacent tiles." crlf
+        "-> Flag [" ?r2 "," ?c2 "]." crlf crlf
+    )
 )
 
 (defrule all-closed-is-safe
@@ -222,6 +237,13 @@
         )
         (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type safe)))
     )
+    (printout t "all-closed-is-safe:" crlf
+        "Tile [" ?r "," ?c "] adjacents: " 0 " mines, " ?cc " closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "-> All closed adjacent tiles are safe to open." crlf
+        "-> Mark [" ?r2 "," ?c2 "] as safe." crlf crlf
+    )
 )
 
 (defrule all-closed-is-unsafe
@@ -231,8 +253,16 @@
     (test (and (< ?mc ?cc) (> ?mc 0)))
     (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
     (not (tile-open (row ?r2) (col ?c2)))
+    (not (tile-closed-check (row ?r2) (col ?c2)))
     =>
     (assert (tile-closed-check (row ?r2) (col ?c2) (status unsafe)))
+    (printout t "all-closed-is-unsafe:" crlf 
+        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "-> Some closed adjacent tiles may be unsafe." crlf
+        "-> Mark [" ?r2 "," ?c2 "] as unsafe." crlf crlf
+    )
 )
 
 (defrule clean-closed-check
@@ -280,6 +310,13 @@
         )
         (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type safe)))
     )
+    (printout t "infer-safe-from-flag:" crlf 
+        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?fc " flag." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is previously marked as unsafe." crlf 
+        "-> Unflagged closed adjacent tiles are safe to open." crlf
+        "-> Mark [" ?r2 "," ?c2 "] as safe." crlf crlf
+    )
 )
 
 (defrule infer-flag-from-safe
@@ -298,6 +335,13 @@
         )
         (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type flag)))
     )
+    (printout t "infer-flag-from-safe:" crlf
+        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed, " ?sc " safe." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is previously marked as unsafe." crlf 
+        "-> Flag unsafe closed adjacent tiles" crlf
+        "-> Flag [" ?r2 "," ?c2 "]." crlf crlf
+    )
 )
 
 (defrule check-closed-end
@@ -315,6 +359,10 @@
     =>
     (retract ?f)
     (assert (open-tile (row ?r) (col ?c)))
+    (printout t "action-safe:" crlf
+        "Tile [" ?r "," ?c "] is safe to open." crlf
+        "-> Open tile [" ?r "," ?c "]" crlf crlf
+    )
 )
 
 (defrule action-unsafe
@@ -324,4 +372,8 @@
     =>
     (retract ?f)
     (assert (open-tile (row ?r) (col ?c)))
+    (printout t "action-unsafe:" crlf
+        "Tile [" ?r "," ?c "] is unsafe, but there are no safe tiles to open." crlf
+        "-> Open tile [" ?r "," ?c "]" crlf crlf
+    )
 )

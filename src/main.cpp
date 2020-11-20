@@ -5,15 +5,15 @@ int main() {
 
     env = CreateEnvironment();
 
-    Watch(env, STATISTICS);
-    Watch(env, FACTS);
-    Watch(env, ACTIVATIONS);
+    //Watch(env, STATISTICS);
+    //Watch(env, FACTS);
+    //Watch(env, ACTIVATIONS);
     if (Load(env,"clp/minesweeper.clp") != LoadError::LE_NO_ERROR)
         exit(1);
     Reset(env);
-    Facts(env, "stdout", NULL, -1, -1, -1);
+    //Facts(env, "stdout", NULL, -1, -1, -1);
     Run(env,-1);
-    Facts(env, "stdout", NULL, -1, -1, -1);
+    //Facts(env, "stdout", NULL, -1, -1, -1);
 
     DestroyEnvironment(env);
 }
