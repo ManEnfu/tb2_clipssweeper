@@ -180,9 +180,7 @@
         )
         (bind ?x (+ ?x 1))
     )
-    (modify ?f (closed-count ?x))
-    (modify ?f (flag-count 0))
-    (modify ?f (safe-count 0))
+    (modify ?f (closed-count ?x) (flag-count 0) (safe-count 0))
 )
 
 (defrule count-closed-adj-end
@@ -277,7 +275,7 @@
 (defrule inc-adj-flag-count
     (declare (salience 20))
     (phase check-closed)
-    ?f1 <- (tile-open (row ?r) (col ?c) (flag-count ?fc))
+    ?f1 <- (tile-open (row ?r) (col ?c) (flag-count ?fc&~nil))
     ?f2 <- (tile-inc (row ?r) (col ?c) (type flag))
     =>
     (retract ?f2)
@@ -287,7 +285,7 @@
 (defrule inc-adj-safe-count
     (declare (salience 20))
     (phase check-closed)
-    ?f1 <- (tile-open (row ?r) (col ?c) (safe-count ?sc))
+    ?f1 <- (tile-open (row ?r) (col ?c) (safe-count ?sc&~nil))
     ?f2 <- (tile-inc (row ?r) (col ?c) (type safe))
     =>
     (retract ?f2)
