@@ -1,4 +1,4 @@
 (defrule hello
  (box ?b)
  =>
- (println "Hello World!"))
+ (printout t "Hello World!"))

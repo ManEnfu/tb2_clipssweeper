@@ -57,35 +57,6 @@
 
 (deffacts dummy-data
     (phase init-field)
-    (size 6)
-    (tile-open (row 0) (col 0) (mine-count 0))
-    (tile-open (row 0) (col 1) (mine-count 0))
-    (tile-open (row 0) (col 2) (mine-count 1))
-    
-    (tile-open (row 1) (col 0) (mine-count 0))
-    (tile-open (row 1) (col 1) (mine-count 0))
-    (tile-open (row 1) (col 2) (mine-count 1))
-    (tile-open (row 1) (col 3) (mine-count 1))
-    (tile-open (row 1) (col 4) (mine-count 3))
-    
-    (tile-open (row 2) (col 0) (mine-count 0))
-    (tile-open (row 2) (col 1) (mine-count 0))
-    (tile-open (row 2) (col 2) (mine-count 0))
-    (tile-open (row 2) (col 3) (mine-count 0))
-    (tile-open (row 2) (col 4) (mine-count 2))
-    
-    (tile-open (row 3) (col 0) (mine-count 0))
-    (tile-open (row 3) (col 1) (mine-count 0))
-    (tile-open (row 3) (col 2) (mine-count 1))
-    (tile-open (row 3) (col 3) (mine-count 2))
-    (tile-open (row 3) (col 4) (mine-count 3))
-
-    (tile-open (row 4) (col 0) (mine-count 0))
-    (tile-open (row 4) (col 1) (mine-count 1))
-    (tile-open (row 4) (col 2) (mine-count 2))
-
-    (tile-open (row 5) (col 0) (mine-count 0))
-    (tile-open (row 5) (col 1) (mine-count 1))
 )
 
 ;;; PHASE 1 init-field
@@ -144,32 +115,8 @@
     (tile (row ?r&:(= ?r (- ?s 1))) (col ?c&:(= ?c (- ?s 1))))
     =>
     (retract ?f)
-    (assert (phase init-flag))
-)
-
-;;; PHASE init-flag
-
-(defrule check-flags
-    (declare (salience 10))
-    (phase init-flag)
-    (tile-flag (row ?r) (col ?c))
-    =>
-    (assert (tile-closed-check (row ?r) (col ?c) (status flag)))
-)
-
-(defrule check-flags-end
-    (declare (salience 5))
-    ?f <- (phase init-flag)
-    (or
-        (not (tile-flag (row ?r) (col ?c)))
-        (forall (tile-flag (row ?r) (col ?c))
-            (tile-closed-check (row ?r) (col ?c) (status flag))
-        )
-    )
-    =>
-    (retract ?f)
     (assert (phase init-adj))
-)    
+)
 
 
 ;;; PHASE init-adj
@@ -244,6 +191,21 @@
 )
 
 ;;; PHASE check-closed
+
+(defrule check-flags
+    (declare (salience 30))
+    (phase check-closed)
+    (tile-flag (row ?r) (col ?c))
+    =>
+    (assert (tile-closed-check (row ?r) (col ?c) (status flag)))
+    (do-for-all-facts ((?ta tile-adjacent))
+        (and 
+            (= ?ta:row1 ?r) (= ?ta:col1 ?c)
+            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
+        )
+        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r) ?c)) (type flag)))
+    )
+)
 
 (defrule all-closed-is-flag
     (declare (salience 20))
