@@ -20,6 +20,11 @@
     (slot safe-count)
 )
 
+(deftemplate tile-flag
+    (slot row)
+    (slot col)
+)
+
 (deftemplate tile-open-adj-closed
     (slot row)
     (slot col)
@@ -41,6 +46,11 @@
 )
 
 (deftemplate open-tile
+    (slot row)
+    (slot col)
+)
+
+(deftemplate flag-tile
     (slot row)
     (slot col)
 )
@@ -80,7 +90,24 @@
 
 ;;; PHASE 1 init-field
 
+;;; If no tile open, assume 0,0 is safe and open it.
+(defrule first-move-skip
+    (declare (salience 40))
+    ?f <- (phase init-field)
+    (not (tile-open (row ?r) (col ?c)))
+    => 
+    (retract ?f)
+    (assert (tile-closed-check (row 0) (col 0) (status safe)))
+    (assert (phase select-action))
+    (printout t "first-move-skip:" crlf
+        "No opened tiles." crlf
+        "-> Assume tile [0,0] is safe." crlf crlf
+    )
+
+)
+
 (defrule gen-field-start
+    (declare (salience 20))
     (phase init-field)
     (size ?s)
     (not (tile (row ?r) (col ?c)))
@@ -117,8 +144,33 @@
     (tile (row ?r&:(= ?r (- ?s 1))) (col ?c&:(= ?c (- ?s 1))))
     =>
     (retract ?f)
-    (assert (phase init-adj))
+    (assert (phase init-flag))
 )
+
+;;; PHASE init-flag
+
+(defrule check-flags
+    (declare (salience 10))
+    (phase init-flag)
+    (tile-flag (row ?r) (col ?c))
+    =>
+    (assert (tile-closed-check (row ?r) (col ?c) (status flag)))
+)
+
+(defrule check-flags-end
+    (declare (salience 5))
+    ?f <- (phase init-flag)
+    (or
+        (not (tile-flag (row ?r) (col ?c)))
+        (forall (tile-flag (row ?r) (col ?c))
+            (tile-closed-check (row ?r) (col ?c) (status flag))
+        )
+    )
+    =>
+    (retract ?f)
+    (assert (phase init-adj))
+)    
+
 
 ;;; PHASE init-adj
 
@@ -350,6 +402,15 @@
     (assert (phase select-action))
 )
 
+(defrule action-flag
+    (declare (salience 60))
+    (phase select-action)
+    (tile-closed-check (row ?r) (col ?c) (status flag))
+    (not (tile-flag (row ?r) (col ?c)))
+    =>
+    (assert (flag-tile (row ?r) (col ?c)))
+)
+
 (defrule action-safe
     (declare (salience 40))
     ?f <- (phase select-action)
@@ -375,3 +436,4 @@
         "-> Open tile [" ?r "," ?c "]" crlf crlf
     )
 )
+
