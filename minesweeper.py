@@ -71,6 +71,7 @@ class Minesweeper:
                 self.open_expand(expands, i + 1, j)
                 self.open_expand(expands, i + 1, j + 1)
                 del expands[0]
+        self.check_win()
 
     def open_expand(self, expands, x, y):
         if x >= 0 and x < self.size and y >= 0 and y < self.size:
@@ -78,6 +79,16 @@ class Minesweeper:
                 self.matrix[x][y].open = True
                 if self.matrix[x][y].num == 0:
                     expands.append((x, y))
+
+    def check_win(self):
+        if self.game == IN_GAME:
+            for row in self.matrix:
+                for tile in row:
+                    if tile.open and tile.mine:
+                        return
+                    elif not tile.open and not (tile.flag and tile.mine):
+                        return
+            self.game = WIN
 
     def flag(self, x, y):
         if self.game == IN_GAME and not self.matrix[x][y].open and not self.matrix[x][y].flag:
@@ -90,16 +101,16 @@ class Minesweeper:
                 tile = self.matrix[i][j]
                 if tile.open or self.game == INIT:
                     if tile.mine:
-                        temp += '* '
+                        temp += ' *'
                     elif tile.num == 0:
-                        temp += '  '
+                        temp += ' .'
                     else:
-                        temp += str(tile.num) + ' '
+                        temp += ' ' + str(tile.num)
                 else:
                     if tile.flag:
-                        temp += 'F '
+                        temp += ' F'
                     else:
-                        temp += '# '
+                        temp += ' #'
             temp += '\n'
         return temp
     

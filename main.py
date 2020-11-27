@@ -15,14 +15,16 @@ def main():
     msw.toggle_mine(7, 8)
     msw.start_game()
     msw.display()
-    for i in range(1, 5):
+    i = 1
+    while msw.game == IN_GAME:
         print('======================== PHASE', i)
         env.reset()
         msw.send_to_clips(env)
         env.run()
         msw.act_from_clips(env)
         msw.display()
-        
+        i += 1
+    print(msw.game)
 
 if __name__ == '__main__':
     main()

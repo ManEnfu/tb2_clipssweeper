@@ -227,7 +227,7 @@
     (printout t "all-closed-is-flag:" crlf
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
         "-> Flag all closed adjacent tiles." crlf
         "-> Flag [" ?r2 "," ?c2 "]." crlf crlf
     )
@@ -252,7 +252,7 @@
     (printout t "all-closed-is-safe:" crlf
         "Tile [" ?r "," ?c "] adjacents: " 0 " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed and not marked as safe." crlf 
         "-> All closed adjacent tiles are safe to open." crlf
         "-> Mark [" ?r2 "," ?c2 "] as safe." crlf crlf
     )
@@ -271,7 +271,7 @@
     (printout t "all-closed-is-unsafe:" crlf 
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed and not yet marked." crlf 
         "-> Some closed adjacent tiles may be unsafe." crlf
         "-> Mark [" ?r2 "," ?c2 "] as unsafe." crlf crlf
     )
