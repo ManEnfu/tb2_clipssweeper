@@ -22,6 +22,8 @@ class Minesweeper:
             for j in range(size)
         ]
         self.game = INIT
+        self.env = clips.Environment()
+        self.recent_act = (-1, -1)
 
     def toggle_mine(self, i, j):
         if self.game != INIT:
@@ -49,11 +51,24 @@ class Minesweeper:
 
     def start_game(self):
         if self.game == INIT:
+            self.env.load('clp/minesweeper.clp')
+            # self.env.eval('(watch rules)')
+            # self.env.eval('(watch facts)')
+            self.env.reset()
+            self.env.assert_string('(size {})'.format(self.size))
             self.game = IN_GAME
 
     def open(self, x, y):
         if self.game == IN_GAME and not self.matrix[x][y].open and not self.matrix[x][y].flag:
             self.matrix[x][y].open = True
+            self.recent_act = (x, y)
+            # assert fact
+            tile_open_template = self.env.find_template('tile-open')
+            fact = tile_open_template.new_fact()
+            fact['row'] = x
+            fact['col'] = y
+            fact['mine-count'] = self.matrix[x][y].num
+            fact.assertit()
             if self.matrix[x][y].mine:
                 self.game = LOSE
                 return
@@ -77,6 +92,13 @@ class Minesweeper:
         if x >= 0 and x < self.size and y >= 0 and y < self.size:
             if not self.matrix[x][y].open and not self.matrix[x][y].flag:
                 self.matrix[x][y].open = True
+                # assert fact
+                tile_open_template = self.env.find_template('tile-open')
+                fact = tile_open_template.new_fact()
+                fact['row'] = x
+                fact['col'] = y
+                fact['mine-count'] = self.matrix[x][y].num
+                fact.assertit()
                 if self.matrix[x][y].num == 0:
                     expands.append((x, y))
 
@@ -93,52 +115,45 @@ class Minesweeper:
     def flag(self, x, y):
         if self.game == IN_GAME and not self.matrix[x][y].open and not self.matrix[x][y].flag:
             self.matrix[x][y].flag = True
+            self.recent_act = (x, y)
 
     def to_str(self):
         temp = ''
         for i in range(self.size):
             for j in range(self.size):
                 tile = self.matrix[i][j]
+                if self.recent_act == (i, j):
+                    temp += '['
+                elif self.recent_act == (i, j - 1):
+                    temp += ']'
+                else:
+                    temp += ' '
                 if tile.open or self.game == INIT:
                     if tile.mine:
-                        temp += ' *'
+                        temp += '*'
                     elif tile.num == 0:
-                        temp += ' .'
+                        temp += '.'
                     else:
-                        temp += ' ' + str(tile.num)
+                        temp += str(tile.num)
                 else:
                     if tile.flag:
-                        temp += ' F'
+                        temp += 'F'
                     else:
-                        temp += ' #'
+                        temp += '#'
+            if self.recent_act == (i, self.size - 1):
+                temp += ']'
             temp += '\n'
         return temp
     
     def display(self):
         print(self.to_str())
 
-    def send_to_clips(self, env: clips.Environment):
-        tile_open_template = env.find_template('tile-open')
-        tile_closed_check = env.find_template('tile-flag')
-        env.assert_string('(size {})'.format(self.size))
-        for i in range(self.size):
-            for j in range(self.size):
-                tile = self.matrix[i][j]
-                if tile.open:
-                    fact = tile_open_template.new_fact()
-                    fact['row'] = i
-                    fact['col'] = j
-                    fact['mine-count'] = tile.num
-                    fact.assertit()
-                elif tile.flag:
-                    fact = tile_closed_check.new_fact()
-                    fact['row'] = i
-                    fact['col'] = j
-                    fact.assertit()
-
-    def act_from_clips(self, env: clips.Environment):
-        for f in env.facts():
+    def next_clips_iter(self):
+        self.env.run()
+        for f in self.env.facts():
             if f.template.name == 'flag-tile':
                 self.flag(int(f['row']), int(f['col']))
             elif f.template.name == 'open-tile':
                 self.open(int(f['row']), int(f['col']))
+        self.env.assert_string('(phase clear-act)')
+

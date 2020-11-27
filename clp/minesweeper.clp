@@ -25,6 +25,16 @@
     (slot col)
 )
 
+(deftemplate tile-unsafe
+    (slot row)
+    (slot col)
+)
+
+(deftemplate tile-safe
+    (slot row)
+    (slot col)
+)
+
 (deftemplate tile-open-adj-closed
     (slot row)
     (slot col)
@@ -62,20 +72,6 @@
 ;;; PHASE 1 init-field
 
 ;;; If no tile open, assume 0,0 is safe and open it.
-(defrule first-move-skip
-    (declare (salience 40))
-    ?f <- (phase init-field)
-    (not (tile-open (row ?r) (col ?c)))
-    => 
-    (retract ?f)
-    (assert (tile-closed-check (row 0) (col 0) (status safe)))
-    (assert (phase select-action))
-    (printout t "first-move-skip:" crlf
-        "No opened tiles." crlf
-        "-> Assume tile [0,0] is safe." crlf crlf
-    )
-
-)
 
 (defrule gen-field-start
     (declare (salience 20))
@@ -150,23 +146,50 @@
     )
     =>
     (retract ?f)
+    (assert (phase clear-act))
+)
+
+;;; PHASE clear
+(defrule clear-open-tile
+    (phase clear-act)
+    ?f <- (open-tile (row ?r) (col ?c))
+    =>
+    (retract ?f)
+)
+
+(defrule clear-flag-tile
+    (phase clear-act)
+    ?f <- (flag-tile (row ?r) (col ?c))
+    =>
+    (retract ?f)
+)
+
+(defrule reset-tile-open-closed-count
+    (phase clear-act)
+    ?f <- (tile-open (row ?r) (col ?c) (closed-count ?v&~nil))
+    =>
+    (modify ?f (closed-count nil))
+)
+
+(defrule reset-tile-open-flag-count
+    (phase clear-act)
+    ?f <- (tile-open (row ?r) (col ?c) (flag-count ?v&~nil))
+    =>
+    (modify ?f (flag-count nil))
+)
+
+(defrule clear-act-end
+    ?f <- (phase clear-act)
+    (not (open-tile (row ?r) (col ?c)))
+    (not (flag-tile (row ?r) (col ?c)))
+    (not (tile-open (row ?r) (col ?c) (closed-count ?v&~nil)))
+    (not (tile-open (row ?r) (col ?c) (flag-count ?v&~nil)))
+    =>
+    (retract ?f)
     (assert (phase init-closed-count))
 )
 
 ;;; PHASE init-closed-count
-(deffunction count-status-adj (?r ?c ?s)
-    (bind ?x 0)
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r) (= ?ta:col1 ?c)
-            (any-factp ((?tcc tile-closed-check)) (and (= ?ta:row2 ?tcc:row) (= ?ta:col2 ?tcc:col) (eq ?tcc:status ?s)))
-        )
-        (bind ?x (+ ?x 1))
-    )
-    (printout t "csa " ?r " " ?c " " ?s " " ?x crlf)
-    (return ?x)
-)
-
 (defrule count-closed-adj
     (phase init-closed-count)
     ?f <- (tile-open (row ?r) (col ?c) (closed-count nil))
@@ -179,52 +202,62 @@
         )
         (bind ?x (+ ?x 1))
     )
-    (modify ?f (closed-count ?x) (flag-count 0) (safe-count 0))
+    (modify ?f (closed-count ?x))
+)
+
+(defrule count-flag-adj
+    (phase init-closed-count)
+    ?f <- (tile-open (row ?r) (col ?c) (flag-count nil))
+    =>
+    (bind ?x 0)
+    (do-for-all-facts ((?ta tile-adjacent))
+        (and 
+            (= ?ta:row1 ?r) (= ?ta:col1 ?c)
+            (any-factp ((?to tile-flag)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
+        )
+        (bind ?x (+ ?x 1))
+    )
+    (modify ?f (flag-count ?x))
 )
 
 (defrule count-closed-adj-end
     ?f <- (phase init-closed-count)
     (not (tile-open (row ?r) (col ?c) (closed-count nil)))
+    (not (tile-open (row ?r) (col ?c) (flag-count nil)))
     =>
     (retract ?f)
     (assert (phase check-closed))
 )
 
 ;;; PHASE check-closed
-
-(defrule check-flags
-    (declare (salience 30))
-    (phase check-closed)
-    (tile-flag (row ?r) (col ?c))
-    =>
-    (assert (tile-closed-check (row ?r) (col ?c) (status flag)))
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r) (= ?ta:col1 ?c)
-            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
-        )
-        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r) ?c)) (type flag)))
+(defrule first-move-skip
+    (declare (salience 40))
+    ?f <- (phase check-closed)
+    (not (tile-open (row ?r) (col ?c)))
+    => 
+    (retract ?f)
+    (assert (open-tile (row 0) (col 0)))
+    (printout t "first-move-skip:" crlf
+        "No opened tiles." crlf
+        "-> Assume tile [0,0] is safe." crlf
+        "-> Open [0,0]." crlf crlf
     )
+
 )
 
-(defrule all-closed-is-flag
+(defrule act-flag
     (declare (salience 20))
-    (phase check-closed)
-    (tile-open (row ?r) (col ?c) (mine-count ?mc) (closed-count ?cc))
+    ?f <- (phase check-closed)
+    (tile-open (row ?r) (col ?c) (mine-count ?mc) (closed-count ?cc&~nil))
     (test (= ?mc ?cc))
     (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
     (not (tile-open (row ?r2) (col ?c2)))
-    (not (tile-closed-check (row ?r2) (col ?c2) (status flag)))
+    (not (tile-flag (row ?r2) (col ?c2)))
     =>
-    (assert (tile-closed-check (row ?r2) (col ?c2) (status flag)))
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r2) (= ?ta:col1 ?c2)
-            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
-        )
-        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type flag)))
-    )
-    (printout t "all-closed-is-flag:" crlf
+    (retract ?f)
+    (assert (tile-flag (row ?r2) (col ?c2)))
+    (assert (flag-tile (row ?r2) (col ?c2)))
+    (printout t "act-flag:" crlf
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
         "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
@@ -233,169 +266,45 @@
     )
 )
 
-(defrule all-closed-is-safe
-    (declare (salience 20))
-    (phase check-closed)
-    (tile-open (row ?r) (col ?c) (mine-count 0) (closed-count ?cc))
-    (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
-    (not (tile-open (row ?r2) (col ?c2)))
-    (not (tile-closed-check (row ?r2) (col ?c2) (status safe)))
-    =>
-    (assert (tile-closed-check (row ?r2) (col ?c2) (status safe)))
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r2) (= ?ta:col1 ?c2)
-            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
-        )
-        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type safe)))
-    )
-    (printout t "all-closed-is-safe:" crlf
-        "Tile [" ?r "," ?c "] adjacents: " 0 " mines, " ?cc " closed." crlf 
-        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is closed and not marked as safe." crlf 
-        "-> All closed adjacent tiles are safe to open." crlf
-        "-> Mark [" ?r2 "," ?c2 "] as safe." crlf crlf
-    )
-)
-
-(defrule all-closed-is-unsafe
-    (declare (salience 20))
-    (phase check-closed)
-    (tile-open (row ?r) (col ?c) (mine-count ?mc) (closed-count ?cc))
-    (test (and (< ?mc ?cc) (> ?mc 0)))
-    (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
-    (not (tile-open (row ?r2) (col ?c2)))
-    (not (tile-closed-check (row ?r2) (col ?c2)))
-    =>
-    (assert (tile-closed-check (row ?r2) (col ?c2) (status unsafe)))
-    (printout t "all-closed-is-unsafe:" crlf 
-        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
-        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is closed and not yet marked." crlf 
-        "-> Some closed adjacent tiles may be unsafe." crlf
-        "-> Mark [" ?r2 "," ?c2 "] as unsafe." crlf crlf
-    )
-)
-
-(defrule clean-closed-check
-    (declare (salience 25))
-    (phase check-closed)
-    ?f <- (tile-closed-check (row ?r) (col ?c) (status unsafe))
-    (tile-closed-check (row ?r) (col ?c) (status flag|safe))
-    =>
-    (retract ?f)
-)
-
-(defrule inc-adj-flag-count
-    (declare (salience 20))
-    (phase check-closed)
-    ?f1 <- (tile-open (row ?r) (col ?c) (flag-count ?fc&~nil))
-    ?f2 <- (tile-inc (row ?r) (col ?c) (type flag))
-    =>
-    (retract ?f2)
-    (modify ?f1 (flag-count (+ ?fc 1)))
-) 
-
-(defrule inc-adj-safe-count
-    (declare (salience 20))
-    (phase check-closed)
-    ?f1 <- (tile-open (row ?r) (col ?c) (safe-count ?sc&~nil))
-    ?f2 <- (tile-inc (row ?r) (col ?c) (type safe))
-    =>
-    (retract ?f2)
-    (modify ?f1 (safe-count (+ ?sc 1)))
-) 
-
-(defrule infer-safe-from-flag
+(defrule act-safe
     (declare (salience 15))
-    (phase check-closed)
+    ?f <- (phase check-closed)
     (tile-open (row ?r) (col ?c) (mine-count ?mc) (flag-count ?fc&~nil))
     (test (= ?fc ?mc))
     (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
-    (tile-closed-check (row ?r2) (col ?c2) (status unsafe))
+    (not (tile-open (row ?r2) (col ?c2)))
+    (not (tile-flag (row ?r2) (col ?c2)))
     =>
-    (assert (tile-closed-check (row ?r2) (col ?c2) (status safe)))
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r2) (= ?ta:col1 ?c2)
-            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
-        )
-        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type safe)))
-    )
-    (printout t "infer-safe-from-flag:" crlf 
+    (retract ?f)
+    (assert (open-tile (row ?r2) (col ?c2)))
+    (printout t "act-safe" crlf 
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?fc " flag." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is previously marked as unsafe." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
         "-> Unflagged closed adjacent tiles are safe to open." crlf
-        "-> Mark [" ?r2 "," ?c2 "] as safe." crlf crlf
+        "-> Tile [" ?r2 "," ?c2 "] is safe to open." crlf
+        "-> Open [" ?r2 "," ?c2 "]" crlf crlf
     )
 )
 
-(defrule infer-flag-from-safe
-    (declare (salience 15))
-    (phase check-closed)
-    (tile-open (row ?r) (col ?c) (mine-count ?mc) (closed-count ?cc&~nil) (safe-count ?sc&~nil))
-    (test (= ?sc (- ?cc ?mc)))
-    (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
-    (tile-closed-check (row ?r2) (col ?c2) (status unsafe))
-    =>
-    (assert (tile-closed-check (row ?r2) (col ?c2) (status flag)))
-    (do-for-all-facts ((?ta tile-adjacent))
-        (and 
-            (= ?ta:row1 ?r2) (= ?ta:col1 ?c2)
-            (any-factp ((?to tile-open)) (and (= ?ta:row2 ?to:row) (= ?ta:col2 ?to:col)))
-        )
-        (assert (tile-inc (row ?ta:row2) (col ?ta:col2) (id (+ (* 100 ?r2) ?c2)) (type flag)))
-    )
-    (printout t "infer-flag-from-safe:" crlf
-        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed, " ?sc " safe." crlf 
-        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
-        "Tile [" ?r2 "," ?c2 "] is previously marked as unsafe." crlf 
-        "-> Flag unsafe closed adjacent tiles" crlf
-        "-> Flag [" ?r2 "," ?c2 "]." crlf crlf
-    )
-)
-
-(defrule check-closed-end
-    (declare (salience 0))
+(defrule act-unsafe
+    (declare (salience 10))
     ?f <- (phase check-closed)
+    (tile-open (row ?r) (col ?c) (mine-count ?mc) (closed-count ?cc))
+    (tile-adjacent (row1 ?r) (col1 ?c) (row2 ?r2) (col2 ?c2))
+    (not (tile-open (row ?r2) (col ?c2)))
+    (not (tile-flag (row ?r2) (col ?c2)))
     =>
     (retract ?f)
-    (assert (phase select-action))
-)
-
-(defrule action-flag
-    (declare (salience 60))
-    (phase select-action)
-    (tile-closed-check (row ?r) (col ?c) (status flag))
-    (not (tile-flag (row ?r) (col ?c)))
-    =>
-    (assert (flag-tile (row ?r) (col ?c)))
-)
-
-(defrule action-safe
-    (declare (salience 40))
-    ?f <- (phase select-action)
-    (tile-closed-check (row ?r) (col ?c) (status safe))
-    =>
-    (retract ?f)
-    (assert (open-tile (row ?r) (col ?c)))
-    (printout t "action-safe:" crlf
-        "Tile [" ?r "," ?c "] is safe to open." crlf
-        "-> Open tile [" ?r "," ?c "]" crlf crlf
+    (assert (open-tile (row ?r2) (col ?c2)))
+    (printout t "act-unsafe:" crlf 
+        "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
+        "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
+        "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
+        "-> Some closed adjacent tiles may be unsafe." crlf
+        "-> Tile [" ?r2 "," ?c2 "] is not safe to open." crlf
+        "-> Open [" ?r2 "," ?c2 "] (unsafe)" crlf crlf
     )
 )
 
-(defrule action-unsafe
-    (declare (salience 20))
-    ?f <- (phase select-action)
-    (tile-closed-check (row ?r) (col ?c) (status unsafe))
-    =>
-    (retract ?f)
-    (assert (open-tile (row ?r) (col ?c)))
-    (printout t "action-unsafe:" crlf
-        "Tile [" ?r "," ?c "] is unsafe, but there are no safe tiles to open." crlf
-        "-> Open tile [" ?r "," ?c "]" crlf crlf
-    )
-)
 

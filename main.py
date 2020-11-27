@@ -2,8 +2,6 @@ import clips
 from minesweeper import *
 
 def main():
-    env = clips.Environment()
-    env.load('clp/minesweeper.clp')
     msw = Minesweeper(10)
     msw.toggle_mine(0, 6)
     msw.toggle_mine(2, 2)
@@ -16,12 +14,9 @@ def main():
     msw.start_game()
     msw.display()
     i = 1
-    while msw.game == IN_GAME:
+    while msw.game == IN_GAME and i < 100:
         print('======================== PHASE', i)
-        env.reset()
-        msw.send_to_clips(env)
-        env.run()
-        msw.act_from_clips(env)
+        msw.next_clips_iter()
         msw.display()
         i += 1
     print(msw.game)
