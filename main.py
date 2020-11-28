@@ -1,5 +1,6 @@
 import clips
 from minesweeper import *
+from minesweeperlog import *
 
 def main():
     msw = Minesweeper(10)
@@ -12,13 +13,15 @@ def main():
     msw.toggle_mine(6, 2)
     msw.toggle_mine(7, 8)
     msw.start_game()
-    msw.display()
+    mswlog = MinesweeperLog()
+    mswlog.log_state(msw)
     i = 1
     while msw.game == IN_GAME and i < 100:
-        print('======================== PHASE', i)
         msw.next_clips_iter()
-        msw.display()
+        mswlog.log_state(msw)
+        mswlog.log_reason()
         i += 1
+    mswlog.display()
     print(msw.game)
 
 if __name__ == '__main__':

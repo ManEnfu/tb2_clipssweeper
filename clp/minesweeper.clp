@@ -186,6 +186,7 @@
     (not (tile-open (row ?r) (col ?c) (flag-count ?v&~nil)))
     =>
     (retract ?f)
+    (open ".log" logfile "w")
     (assert (phase init-closed-count))
 )
 
@@ -236,8 +237,9 @@
     (not (tile-open (row ?r) (col ?c)))
     => 
     (retract ?f)
+    (assert (phase end-phase))
     (assert (open-tile (row 0) (col 0)))
-    (printout t "first-move-skip:" crlf
+    (printout logfile "first-move-skip:" crlf
         "No opened tiles." crlf
         "-> Assume tile [0,0] is safe." crlf
         "-> Open [0,0]." crlf crlf
@@ -255,9 +257,10 @@
     (not (tile-flag (row ?r2) (col ?c2)))
     =>
     (retract ?f)
+    (assert (phase end-phase))
     (assert (tile-flag (row ?r2) (col ?c2)))
     (assert (flag-tile (row ?r2) (col ?c2)))
-    (printout t "act-flag:" crlf
+    (printout logfile "act-flag:" crlf
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
         "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
@@ -276,8 +279,9 @@
     (not (tile-flag (row ?r2) (col ?c2)))
     =>
     (retract ?f)
+    (assert (phase end-phase))
     (assert (open-tile (row ?r2) (col ?c2)))
-    (printout t "act-safe" crlf 
+    (printout logfile "act-safe:" crlf 
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?fc " flag." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
         "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
@@ -296,8 +300,9 @@
     (not (tile-flag (row ?r2) (col ?c2)))
     =>
     (retract ?f)
+    (assert (phase end-phase))
     (assert (open-tile (row ?r2) (col ?c2)))
-    (printout t "act-unsafe:" crlf 
+    (printout logfile "act-unsafe:" crlf 
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
         "Tile [" ?r2 "," ?c2 "] is adjacent to tile [" ?r "," ?c "]." crlf 
         "Tile [" ?r2 "," ?c2 "] is closed and not flagged." crlf 
@@ -305,6 +310,13 @@
         "-> Tile [" ?r2 "," ?c2 "] is not safe to open." crlf
         "-> Open [" ?r2 "," ?c2 "] (unsafe)" crlf crlf
     )
+)
+
+(defrule close-log
+    ?f <- (phase end-phase)
+    =>
+    (retract ?f)
+    (close logfile)
 )
 
 
