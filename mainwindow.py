@@ -66,24 +66,35 @@ class MainWindow(q.QWidget):
         super().__init__()
         
         self.button = q.QPushButton("Confirm")
-        self.table = MinesweeperWidget(10)
         self.next = q.QPushButton("Next")
         self.textbox = q.QTextEdit()
         self.textbox.setReadOnly(True)
         self.textbox.setText("Step 0\n\nReasoning:")
         self.textbox.setMinimumSize(300, 100)
+        self.size_input = q.QTextEdit()
+        self.size_input.setMinimumSize(300, 25)
+        self.confirm_size = q.QPushButton("confirm size")
+        self.size_label = q.QLabel()
+        self.size_label.setText("Input board size")
+        self.size_label.setAlignment(Qt.AlignLeft)
+        self.size_error = q.QLabel()
+        self.size_error.setText("Size must be an integer")
+        self.size_error.setAlignment(Qt.AlignLeft)
+        self.size_error.setVisible(False)
+        self.size_error.setStyleSheet("color: red")
 
         self.layout = q.QHBoxLayout()
         self.right_panel_layout = q.QVBoxLayout()
 
-        self.right_panel_layout.addWidget(self.textbox)
-        self.right_panel_layout.addWidget(self.button)
-        self.layout.addWidget(self.table)
+        self.right_panel_layout.addWidget(self.size_label)
+        self.right_panel_layout.addWidget(self.size_input)
+        self.right_panel_layout.addWidget(self.size_error)
+        self.right_panel_layout.addWidget(self.confirm_size)
         self.layout.addLayout(self.right_panel_layout)
         self.setLayout(self.layout)
 
         # Connecting the signal
-        self.button.clicked.connect(self.on_click)
+        self.confirm_size.clicked.connect(self.init_size)
 
     @Slot()
     def on_click(self):
@@ -109,6 +120,29 @@ class MainWindow(q.QWidget):
         else:
             self.textbox.setText(str(self.table.mswlog) + self.table.msw.print_game_status())
             self.next.clicked.disconnect()
+
+
+    @Slot()
+    def init_size(self):
+        try:
+            size = int(self.size_input.toPlainText())
+            self.size_label.hide()
+            self.size_input.hide()
+            self.confirm_size.hide()
+            self.size_error.hide()
+            self.confirm_size.clicked.disconnect()
+            
+            self.table = MinesweeperWidget(size)
+            self.layout.removeItem(self.right_panel_layout)
+            self.layout.addWidget(self.table)
+            self.right_panel_layout.addWidget(self.textbox)
+            self.right_panel_layout.addWidget(self.button)
+            self.layout.addLayout(self.right_panel_layout)
+            self.button.clicked.connect(self.on_click)
+        except:
+            self.size_error.setVisible(True)
+
+
 if __name__ == "__main__":
     app = q.QApplication(sys.argv + ['-style','Fusion'])
 
