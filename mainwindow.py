@@ -12,7 +12,7 @@ class MinesweeperWidget(q.QWidget):
         self.buttons = [[q.QPushButton(" ") for i in range(size)] for j in range(size)]
         self.row = [q.QHBoxLayout() for i in range(size)]
         self.mapper = QSignalMapper()
-        self.msw = minesweeper.Minesweeper(10)
+        self.msw = minesweeper.Minesweeper(size)
         self.mswlog = minesweeperlog.MinesweeperLog()
         for i in range(size):
             for j in range(size):
