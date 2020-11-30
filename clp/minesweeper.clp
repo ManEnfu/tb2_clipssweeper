@@ -258,7 +258,6 @@
     =>
     (retract ?f)
     (assert (phase end-phase))
-    (assert (tile-flag (row ?r2) (col ?c2)))
     (assert (flag-tile (row ?r2) (col ?c2)))
     (printout logfile "act-flag:" crlf
         "Tile [" ?r "," ?c "] adjacents: " ?mc " mines, " ?cc " closed." crlf 
