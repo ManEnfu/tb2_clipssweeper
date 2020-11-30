@@ -73,7 +73,7 @@ class MainWindow(q.QWidget):
         self.textbox.setMinimumSize(300, 100)
         self.size_input = q.QTextEdit()
         self.size_input.setMinimumSize(300, 25)
-        self.confirm_size = q.QPushButton("confirm size")
+        self.confirm_size = q.QPushButton("Confirm size")
         self.size_label = q.QLabel()
         self.size_label.setText("Input board size")
         self.size_label.setAlignment(Qt.AlignLeft)
