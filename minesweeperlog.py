@@ -114,6 +114,9 @@ class MinesweeperLog:
             print(self.reasons[i])
         self.items[len(self.reasons)].display()
     
+    def to_str_reasons(self,i):
+        return str(self.reasons[i]) 
+
     def __str__(self):
         '''
         Mentranslasikan daftar reason yang masih berupa list
