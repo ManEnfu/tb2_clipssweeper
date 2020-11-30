@@ -41,7 +41,7 @@ class MinesweeperWidget(q.QWidget):
             for j in range(self.size):
                 tile = mswlog_item.matrix[i][j]
                 if tile.open:
-                    self.buttons[i][j].setStyleSheet('background-color: white, color: black')
+                    self.buttons[i][j].setStyleSheet('background-color: white; color: black')
                     self.buttons[i][j].setEnabled(False)
                     if tile.mine:
                         self.buttons[i][j].setText('*')
@@ -50,14 +50,14 @@ class MinesweeperWidget(q.QWidget):
                     else:
                         self.buttons[i][j].setText(str(tile.num))
                 else:
-                    self.buttons[i][j].setStyleSheet('background-color: blue, color: black')
+                    self.buttons[i][j].setStyleSheet('background-color: blue; color: black')
                     self.buttons[i][j].setEnabled(True)
                     if tile.flag:
                         self.buttons[i][j].setText('F')
                     else:
                         self.buttons[i][j].setText(' ')
                 if self.msw.recent_act == (i, j):
-                    self.buttons[i][j].setStyleSheet('background-color: green, color: black')
+                    self.buttons[i][j].setStyleSheet('background-color: green; color: black')
 
 
 
