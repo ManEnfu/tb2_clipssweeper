@@ -2,7 +2,8 @@ import sys
 import random
 import PySide2.QtWidgets as q
 from PySide2.QtCore import Slot, Qt, QObject, SIGNAL, SLOT, QSignalMapper
-
+import minesweeper
+import minesweeperlog
 class MinesweeperWidget(q.QWidget):
     def __init__(self, size):
         super().__init__()
@@ -11,7 +12,8 @@ class MinesweeperWidget(q.QWidget):
         self.buttons = [[q.QPushButton(" ") for i in range(size)] for j in range(size)]
         self.row = [q.QHBoxLayout() for i in range(size)]
         self.mapper = QSignalMapper()
-
+        self.msw = minesweeper.Minesweeper(10)
+        
         for i in range(size):
             for j in range(size):
                 # self.buttons[i][j].setEnabled(False)
@@ -30,6 +32,8 @@ class MinesweeperWidget(q.QWidget):
         r = i // self.size
         c = i % self.size
         print(r, c)
+        self.msw.toggle_mine(r, c)
+        print("toogle mine")
 
     def show_state(self, mswlog_item):
         for i in range(self.size):
@@ -59,9 +63,10 @@ class MinesweeperWidget(q.QWidget):
 class MainWindow(q.QWidget):
     def __init__(self):
         super().__init__()
-
+        
         self.button = q.QPushButton("Confirm")
         self.table = MinesweeperWidget(10)
+        
         self.textbox = q.QTextEdit()
         self.textbox.setReadOnly(True)
         self.textbox.setText("Step 0\n\nReasoning:")
@@ -81,6 +86,17 @@ class MainWindow(q.QWidget):
 
     @Slot()
     def on_click(self):
+        self.table.msw.start_game()
+        self.table.mswlog = minesweeperlog.MinesweeperLog()
+        self.table.mswlog.log_state(self.table.msw)
+        i = 1
+        while self.table.msw.game == minesweeper.IN_GAME and i < 100:
+            self.table.msw.next_clips_iter()
+            self.table.mswlog.log_state(self.table.msw)
+            self.table.mswlog.log_reason()
+            i += 1
+        self.table.mswlog.display()
+        print(self.table.msw.game)
         self.setLayout(self.right_panel_layout)
         self.show()
 
