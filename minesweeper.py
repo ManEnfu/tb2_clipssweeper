@@ -32,7 +32,7 @@ class Minesweeper:
             return
         inc = 1
         if self.matrix[i][j].mine:
-            inc = False
+            inc = -1
         self.matrix[i][j].mine = not self.matrix[i][j].mine
         # Increment/decrement num value of adjacent tiles
         if i > 0:
@@ -129,6 +129,7 @@ class Minesweeper:
             fact['row'] = x
             fact['col'] = y
             fact.assertit()
+        self.check_win()
 
     # Convert to string
     def to_str(self):
@@ -158,6 +159,16 @@ class Minesweeper:
                 temp += ']'
             temp += '\n'
         return temp
+    
+    def print_game_status(self):
+        status = {
+            IN_GAME : "IN_GAME",
+            WIN : "WIN",
+            LOSE : "LOSE",
+            INIT : "INIT"
+        }
+
+        return "Game status : " + status[self.game]
     
     # Print to screen
     def display(self):

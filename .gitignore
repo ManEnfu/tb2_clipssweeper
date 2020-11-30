@@ -8,3 +8,5 @@ src/*.d
 *.swp
 
 clipssweeper
+
+__pycache__

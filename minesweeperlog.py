@@ -1,8 +1,20 @@
+'''
+MinesweeperLog Module
+
+Module ini berguna untuk mengatur penyimpanan log pada KBS
+Penyimpanan dan penampilan log dan reason dari suatu aksi
+'''
+
 from minesweeper import *
 import os
 import copy
 
 class MinesweeperTileLog:
+    '''
+    MinesweeperTileLog Class
+
+    Kelas ini berfungsi untuk menyimpan data terkait status suatu tile
+    '''
     def __init__(self):
         self.open = False
         self.flag = False
@@ -10,6 +22,11 @@ class MinesweeperTileLog:
         self.num = 0
 
 class MinesweeperLogItem:
+    '''
+    MinesweeperLogItem Class
+
+    Kelas ini berfungsi untuk menyimpan data terkait aksi yang dilakukan pada papan
+    '''
     def __init__(self, msw):
         self.size = msw.size
         self.matrix = list()
@@ -21,6 +38,10 @@ class MinesweeperLogItem:
         self.recent_act = msw.recent_act
     
     def to_str(self):
+        '''
+        Mengkonversi suatu state papan menjadi string
+        Nantinya akan di print
+        '''
         temp = ''
         for i in range(self.size):
             for j in range(self.size):
@@ -49,18 +70,34 @@ class MinesweeperLogItem:
         return temp
     
     def display(self):
+        '''
+        Menampilkan status papan saat ini
+        '''
         print(self.to_str())
 
 class MinesweeperLog:
+    '''
+    MinesweeperLog Class
+    
+    Kelas ini berfungsi untuk menyimpan data terkait log 
+    Log didapat dari CLIPS dan akan dituliskan ke dalam logfile .log
+    Data akan dibaca dari .log dan di print
+    '''
     def __init__(self):
         self.items = list()
         self.reasons = list()
 
     def log_state(self, msw):
+        '''
+        Menambahkan log berisi state ke dalam atribut kelas
+        '''
         item = MinesweeperLogItem(msw)
         self.items.append(item)
 
     def log_reason(self):
+        '''
+        Menambah log berisi alasan atau reasoning ke dalam atribut kelas
+        '''
         log = ''
         if (os.path.isfile('./.log')):
             logf = open('./.log', 'r')
@@ -69,6 +106,9 @@ class MinesweeperLog:
         self.reasons.append(log)
 
     def display(self):
+        '''
+        Menampilkan log lengkap yang berisi state dan alasan ke layar
+        '''
         for i in range(len(self.reasons)):
             self.items[i].display()
             print(self.reasons[i])
@@ -77,5 +117,14 @@ class MinesweeperLog:
     def to_str_reasons(self,i):
         return str(self.reasons[i]) 
 
+    def __str__(self):
+        '''
+        Mentranslasikan daftar reason yang masih berupa list
+        Menjadi 1 string
+        '''
+        result = ""
+        for i in range(len(self.reasons)):
+            result += str(self.reasons[i]) + "\n"
+        return result
         
 

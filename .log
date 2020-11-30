@@ -1,0 +1,8 @@
+act-unsafe:
+Tile [2,3] adjacents: 3 mines, 4 closed.
+Tile [3,3] is adjacent to tile [2,3].
+Tile [3,3] is closed and not flagged.
+-> Some closed adjacent tiles may be unsafe.
+-> Tile [3,3] is not safe to open.
+-> Open [3,3] (unsafe)
+
