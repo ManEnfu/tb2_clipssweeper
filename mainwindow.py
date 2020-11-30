@@ -35,8 +35,7 @@ class MinesweeperWidget(q.QWidget):
         self.msw.toggle_mine(r, c)
         print("toogle mine")
 
-    def show_state(self):
-        mswlog_item = self.msw
+    def show_state(self, mswlog_item):
         for i in range(self.size):
             for j in range(self.size):
                 tile = mswlog_item.matrix[i][j]
@@ -62,12 +61,14 @@ class MinesweeperWidget(q.QWidget):
 
 
 class MainWindow(q.QWidget):
-    def __init__(self):
+    next_counter = 0
+    def __init__(self,size):
         super().__init__()
         
         self.button = q.QPushButton("Confirm")
-        self.table = MinesweeperWidget(10)
+        self.table = MinesweeperWidget(size)
         self.next = q.QPushButton("Next")
+        self.prev = q.QPushButton("Previous")
         self.textbox = q.QTextEdit()
         self.textbox.setReadOnly(True)
         self.textbox.setText("Step 0\n\nReasoning:")
@@ -89,30 +90,78 @@ class MainWindow(q.QWidget):
     def on_click(self):
         self.table.msw.start_game()
         self.table.mswlog.log_state(self.table.msw)
+        
+        i = 1
+        while self.table.msw.game == minesweeper.IN_GAME and i < self.table.size*self.table.size :
+            self.table.msw.next_clips_iter()
+            self.table.mswlog.log_state(self.table.msw)
+            self.table.mswlog.log_reason()
+            self.table.mswlog.display()
+            i += 1
+        
         self.setLayout(self.right_panel_layout)
         self.show()
         self.button.hide()
         self.right_panel_layout.addWidget(self.next)
+        self.right_panel_layout.addWidget(self.prev)
         self.next.clicked.connect(self.next_step_minesweeper)
-            
+        self.prev.clicked.connect(self.prev_step_minesweeper)
         
 
     @Slot()
     def next_step_minesweeper(self):
-        if self.table.msw.game == minesweeper.IN_GAME:
-            self.table.msw.next_clips_iter()
-            self.table.mswlog.log_state(self.table.msw)
-            self.table.mswlog.log_reason()
-            self.table.show_state()
-            self.textbox.setText(str(self.table.mswlog))
+        i = MainWindow.next_counter
+        if i < len(self.table.mswlog.items) - 1 :
+            self.table.show_state(self.table.mswlog.items[i+1])
+            self.textbox.setText(self.table.mswlog.to_str_reasons(i+1))
             self.table.mswlog.display()
+            i += 1
         else:
             self.next.clicked.disconnect()
+
+    @Slot()
+    def prev_step_minesweeper(self):
+        i = MainWindow.next_counter
+        if i > 0:
+            self.table.show_state(self.table.mswlog.items[i-1])
+            self.textbox.setText(self.table.mswlog.to_str_reasons(i-1))
+            self.table.mswlog.display()
+            i -= 1
+        else:
+            self.next.clicked.disconnect()
+
+class InitWindow(q.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.label_value = q.QLabel()
+        self.label_value.setText("Size")
+        self.input_value = q.QLineEdit()
+        self.button = q.QPushButton("INIT GAME")
+        self.button.clicked.connect(self.show_new_window)
+        
+        self.layout = q.QVBoxLayout()
+        
+        self.layout.addWidget(self.label_value)
+        self.layout.addWidget(self.input_value)
+        self.layout.addWidget(self.button)
+        self.button.setMinimumSize(300, 100)
+        widget = q.QWidget()
+        widget.setLayout(self.layout)
+        self.setCentralWidget(widget)
+        
+        self.resize(100,100)
+        self.show()
+
+    @Slot()
+    def show_new_window(self, checked):
+        self.widget = MainWindow(int(self.input_value.text()))
+        self.widget.resize(100, 100)
+        self.widget.show()
+        self.hide()
 if __name__ == "__main__":
     app = q.QApplication(sys.argv + ['-style','Fusion'])
-
-    widget = MainWindow()
-    widget.resize(100, 100)
-    widget.show()
+    window = InitWindow()
+    
+    
 
     sys.exit(app.exec_())

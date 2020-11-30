@@ -74,10 +74,8 @@ class MinesweeperLog:
             print(self.reasons[i])
         self.items[len(self.reasons)].display()
     
-    def __str__(self):
-        result = ""
-        for i in range(len(self.reasons)):
-            result += str(self.reasons[i]) + "\n"
-        return result
+    def to_str_reasons(self,i):
+        return str(self.reasons[i]) 
+
         
 
