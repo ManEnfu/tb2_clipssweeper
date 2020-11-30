@@ -159,6 +159,16 @@ class Minesweeper:
             temp += '\n'
         return temp
     
+    def print_game_status(self):
+        status = {
+            IN_GAME : "IN_GAME",
+            WIN : "WIN",
+            LOSE : "LOSE",
+            INIT : "INIT"
+        }
+
+        return "Game status : " + status[self.game]
+    
     # Print to screen
     def display(self):
         print(self.to_str())

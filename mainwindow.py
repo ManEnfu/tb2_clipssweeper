@@ -107,6 +107,7 @@ class MainWindow(q.QWidget):
             self.textbox.setText(str(self.table.mswlog))
             self.table.mswlog.display()
         else:
+            self.textbox.setText(str(self.table.mswlog) + self.table.msw.print_game_status())
             self.next.clicked.disconnect()
 if __name__ == "__main__":
     app = q.QApplication(sys.argv + ['-style','Fusion'])
