@@ -13,7 +13,7 @@ class MinesweeperWidget(q.QWidget):
         self.row = [q.QHBoxLayout() for i in range(size)]
         self.mapper = QSignalMapper()
         self.msw = minesweeper.Minesweeper(10)
-        
+        self.mswlog = minesweeperlog.MinesweeperLog()
         for i in range(size):
             for j in range(size):
                 # self.buttons[i][j].setEnabled(False)
@@ -35,7 +35,8 @@ class MinesweeperWidget(q.QWidget):
         self.msw.toggle_mine(r, c)
         print("toogle mine")
 
-    def show_state(self, mswlog_item):
+    def show_state(self):
+        mswlog_item = self.msw
         for i in range(self.size):
             for j in range(self.size):
                 tile = mswlog_item.matrix[i][j]
@@ -55,7 +56,7 @@ class MinesweeperWidget(q.QWidget):
                         self.buttons[i][j].setText('F')
                     else:
                         self.buttons[i][j].setText(' ')
-                if self.recent_act == (i, j):
+                if self.msw.recent_act == (i, j):
                     self.buttons[i][j].setStyleSheet('background-color: green, color: black')
 
 
@@ -87,13 +88,13 @@ class MainWindow(q.QWidget):
     @Slot()
     def on_click(self):
         self.table.msw.start_game()
-        self.table.mswlog = minesweeperlog.MinesweeperLog()
         self.table.mswlog.log_state(self.table.msw)
         i = 1
         while self.table.msw.game == minesweeper.IN_GAME and i < 100:
             self.table.msw.next_clips_iter()
             self.table.mswlog.log_state(self.table.msw)
             self.table.mswlog.log_reason()
+            self.table.show_state()
             i += 1
         self.table.mswlog.display()
         print(self.table.msw.game)
