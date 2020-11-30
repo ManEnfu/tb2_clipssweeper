@@ -89,7 +89,7 @@ class MainWindow(q.QWidget):
         self.prev = q.QPushButton("Previous")
         self.textbox = q.QTextEdit()
         self.textbox.setReadOnly(True)
-        self.textbox.setText("Step 0\n\nReasoning:")
+        self.textbox.setText("Put mines into tiles by clicking on it. \nPress Confirm to let the agent play the game.")
         self.textbox.setMinimumSize(300, 100)
         self.size_input = q.QTextEdit()
         self.size_input.setMinimumSize(300, 25)
