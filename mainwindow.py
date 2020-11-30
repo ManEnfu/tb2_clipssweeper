@@ -67,7 +67,7 @@ class MainWindow(q.QWidget):
         
         self.button = q.QPushButton("Confirm")
         self.table = MinesweeperWidget(10)
-        
+        self.next = q.QPushButton("Next")
         self.textbox = q.QTextEdit()
         self.textbox.setReadOnly(True)
         self.textbox.setText("Step 0\n\nReasoning:")
@@ -89,19 +89,25 @@ class MainWindow(q.QWidget):
     def on_click(self):
         self.table.msw.start_game()
         self.table.mswlog.log_state(self.table.msw)
-        i = 1
-        while self.table.msw.game == minesweeper.IN_GAME and i < 100:
+        self.setLayout(self.right_panel_layout)
+        self.show()
+        self.button.hide()
+        self.right_panel_layout.addWidget(self.next)
+        self.next.clicked.connect(self.next_step_minesweeper)
+            
+        
+
+    @Slot()
+    def next_step_minesweeper(self):
+        if self.table.msw.game == minesweeper.IN_GAME:
             self.table.msw.next_clips_iter()
             self.table.mswlog.log_state(self.table.msw)
             self.table.mswlog.log_reason()
             self.table.show_state()
             self.textbox.setText(str(self.table.mswlog))
-            i += 1
             self.table.mswlog.display()
-        self.setLayout(self.right_panel_layout)
-        self.show()
-
-
+        else:
+            self.next.clicked.disconnect()
 if __name__ == "__main__":
     app = q.QApplication(sys.argv + ['-style','Fusion'])
 
