@@ -95,9 +95,9 @@ class MainWindow(q.QWidget):
             self.table.mswlog.log_state(self.table.msw)
             self.table.mswlog.log_reason()
             self.table.show_state()
+            self.textbox.setText(str(self.table.mswlog))
             i += 1
-        self.table.mswlog.display()
-        print(self.table.msw.game)
+            self.table.mswlog.display()
         self.setLayout(self.right_panel_layout)
         self.show()
 

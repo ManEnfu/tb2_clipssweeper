@@ -1,8 +1,0 @@
-act-safe:
-Tile [6,0] adjacents: 1 mines, 1 flag.
-Tile [7,0] is adjacent to tile [6,0].
-Tile [7,0] is closed and not flagged.
--> Unflagged closed adjacent tiles are safe to open.
--> Tile [7,0] is safe to open.
--> Open [7,0]
-
