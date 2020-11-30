@@ -167,8 +167,15 @@ class Minesweeper:
             LOSE : "LOSE",
             INIT : "INIT"
         }
-
-        return "Game status : " + status[self.game]
+        temp = "Game status : " + status[self.game]
+        if self.game == WIN or self.game == LOSE:
+            temp += '\n\nPredicted Mines:'
+            for i in range(self.size):
+                for j in range(self.size):
+                    tile = self.matrix[i][j]
+                    if tile.flag:
+                        temp += '\n[' + str(i) + ',' + str(j) + ']'
+        return temp
     
     # Print to screen
     def display(self):
